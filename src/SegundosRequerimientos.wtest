@@ -1,0 +1,109 @@
+import MarcasYJarras.*
+import Personas.*
+import Paises.*
+import Carpas.*
+
+describe "Segundos Requerimientos"{
+	const corona = new CervezaRubia(lupulo = 3, pais = mexico, gradoDeAlcohol = 4.5)
+	const guiness = new CervezaNegra(lupulo = 10, pais = irlanda)
+	const hofbrau = new CervezaRoja(lupulo = 20, pais = alemania)
+	
+	const fulanito = new Persona(peso = 85, aguante = 500, leGustaLaMusica = true, paisDeOrigen = belgica)
+	const menganito = new Persona(peso =60 , aguante = 150, leGustaLaMusica = true, paisDeOrigen = alemania)
+	const zutanito = new Persona(peso = 70, aguante = 300, leGustaLaMusica = true, paisDeOrigen = argentina)
+	const perenganito = new Persona(peso = 110, aguante = 750, leGustaLaMusica = false, paisDeOrigen = irlanda)
+	
+	const carpaCorona = new Carpa(limiteDeGente = 2, marcaEnVenta = corona)
+	const carpaGuiness = new Carpa(limiteDeGente = 10, marcaEnVenta = guiness)
+	const carpaHofbrau = new Carpa(limiteDeGente = 8, marcaEnVenta = hofbrau)
+	
+	test "¿Quiere Entrar?" {
+		assert.notThat(fulanito.quiereEntrarA(carpaCorona)) // No le gusta la Corona.
+		assert.that(fulanito.quiereEntrarA(carpaGuiness)) 	// Tiene todo lo que le gusta.
+		
+		fulanito.entrarA(carpaGuiness)
+		assert.notThat(menganito.quiereEntrarA(carpaGuiness))	// Hay numero impar de personas adentro.
+		assert.that(menganito.quiereEntrarA(carpaCorona))		// Tiene todo lo que le gusta.
+		
+		assert.notThat(perenganito.quiereEntrarA(carpaCorona))	// No le gusta la musica.
+	}
+	
+	test "¿La carpa deja ingresar?" {
+		assert.that(carpaCorona.dejaIngresar(menganito))	// Menganito no esta ebrio y hay lugar.
+		menganito.entrarA(carpaCorona)
+		
+		zutanito.entrarA(carpaCorona)
+		assert.notThat(carpaCorona.dejaIngresar(fulanito))	// Fulanito no esta ebrio pero no hay lugar.	
+	}
+	
+	test "¿Puede entrar?" {
+		assert.that(menganito.puedeEntrar(carpaCorona))		// Menganito quiere entrar y la carpa lo deja ingresar.
+		
+		assert.notThat(fulanito.puedeEntrar(carpaCorona))	// La carpa lo deja ingresar pero Fulanito no quiere entrar.
+	}
+	
+	test "Entrar a una carpa" {
+		assert.that( carpaCorona.genteAdentro().isEmpty() )  // No hay personas en la carpa.
+		
+		menganito.entrarA(carpaCorona)
+		assert.equals([menganito], carpaCorona.genteAdentro())	//Entro Menganito.
+		
+		zutanito.entrarA(carpaCorona)
+		assert.equals([menganito, zutanito], carpaCorona.genteAdentro())	//Entro zutanito.
+		
+		assert.throwsExceptionWithMessage("Rebotaste", 
+								{zutanito.entrarA(carpaCorona)}) // Zutanito quiere entrar pero la carpa esta llena.
+		
+		//Zutanito entra 2 veces a la misma carpa solo para el test.
+	}
+	
+	test "Servir una jarra" {
+		assert.that(menganito.jarrasCompradas().isEmpty())
+		
+		menganito.entrarA(carpaCorona)
+		carpaCorona.servir(new Jarra(capacidad = 2), menganito)
+		
+		assert.equals(1, menganito.jarrasCompradas().size())
+		assert.equals(corona, menganito.jarrasCompradas().first().marca())
+		
+		assert.throwsExceptionWithMessage("La persona no se encuentra en la carpa",	// Zutanito no esta en la carpa.
+								{carpaCorona.servir(new Jarra(capacidad = 1), zutanito)}
+		)
+	}
+	
+	test "Ebrios empedernidos" {
+		menganito.entrarA(carpaGuiness)
+		fulanito.entrarA(carpaGuiness)
+		zutanito.entrarA(carpaGuiness)
+		
+		carpaGuiness.servir(new Jarra(capacidad = 1.5), fulanito)
+		carpaGuiness.servir(new Jarra(capacidad = 1), fulanito)
+		carpaGuiness.servir(new Jarra(capacidad = 2), fulanito)
+		
+		carpaGuiness.servir(new Jarra(capacidad = 3), zutanito)
+		carpaGuiness.servir(new Jarra(capacidad = 3), zutanito)
+		carpaGuiness.servir(new Jarra(capacidad = 3.5), zutanito)
+		
+		carpaGuiness.servir(new Jarra(capacidad = 0.5), menganito)
+		carpaGuiness.servir(new Jarra(capacidad = 0.5), menganito)
+		carpaGuiness.servir(new Jarra(capacidad = 4), menganito)
+		
+		assert.equals(2, carpaGuiness.cantidadDeEbriosEmpedernidos())
+		//Fulanito y Zutanito son los ebrios empedernidos.
+	}
+	
+	test "El patriota" {
+		menganito.entrarA(carpaHofbrau)
+		fulanito.entrarA(carpaHofbrau)
+		
+		carpaHofbrau.servir(new Jarra(capacidad = 1), fulanito)
+		carpaHofbrau.servir(new Jarra(capacidad = 3), fulanito)
+		
+		carpaHofbrau.servir(new Jarra(capacidad = 1), menganito)
+		carpaHofbrau.servir(new Jarra(capacidad = 0.5), menganito)
+		
+		assert.that(menganito.esPatriota())		// Menganito es aleman igual que la marca Hofbrau.
+		assert.notThat(fulanito.esPatriota())	// Fulanito es belga.
+	}
+	
+}

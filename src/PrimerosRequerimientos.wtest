@@ -1,0 +1,51 @@
+import MarcasYJarras.*
+import Personas.*
+import Paises.*
+
+describe "Primeros Requerimientos" {
+	const corona = new CervezaRubia(lupulo = 3, pais = mexico, gradoDeAlcohol = 4.5)
+	const quilmes = new CervezaRubia(lupulo = 5, pais = argentina, gradoDeAlcohol = 10)
+	const guiness = new CervezaNegra(lupulo = 10, pais = irlanda)
+	const hofbrau = new CervezaRoja(lupulo = 20, pais = alemania)
+	
+	const jarraBirraRubia = new Jarra(capacidad = 1, marca = corona)
+	const jarraBirraNegra = new Jarra(capacidad = 2, marca = guiness)
+	const jarraBirraRoja = new Jarra(capacidad = 0.5, marca = hofbrau)
+	
+	const fulanito = new Persona(peso = 85, aguante = 500, paisDeOrigen = belgica) //Un polenta
+	const menganito = new Persona(peso =60 , aguante = 150, paisDeOrigen = repCheca) //Un flojito
+	
+	fixture {
+		graduacionDeCervezaNegra.graduacion(6.4)
+		
+		fulanito.comprarJarra(jarraBirraRubia)
+		fulanito.comprarJarra(jarraBirraNegra)
+		fulanito.comprarJarra(jarraBirraRoja)
+		menganito.comprarJarra(jarraBirraRubia)
+		menganito.comprarJarra(jarraBirraNegra)
+		menganito.comprarJarra(jarraBirraNegra)
+	}
+	
+	test "Contenido de alcohol" {
+		assert.equals(0.045, jarraBirraRubia.contenidoDeAlcohol()) 	// (jarraRubia = 1L) * (graduaciòn = 4,5 / 100)
+		assert.equals(0.128, jarraBirraNegra.contenidoDeAlcohol()) 	// (jarraNegra = 2L) * (graduaciòn = 6,4 / 100)
+		assert.equals(0.04, jarraBirraRoja.contenidoDeAlcohol())	// (jarraRoja = 0,5L) * ((graduaciòn = 6,4 * 1,25) / 100)
+	}
+	
+	test "Total de alcohol de Fulanito y Menganito "{
+		assert.equals(3.5, fulanito.totalDeAlcoholIngerido()) 	// (jarraRubia = 1L) + (jarraNegra = 2L) + (jarraRoja = 0,5L)
+		assert.equals(5, menganito.totalDeAlcoholIngerido())	// (jarraRubia = 1L) + (jarraNegra = 2L) + (jarraNegra = 2L)
+	}
+	
+	test "Fulanito y Menganito ebrios o no" {
+		assert.notThat(fulanito.estaEbria()) // (alcoholIngerido = 3,5L) * (peso = 85) = 297,5. No supera el aguante de 500.
+		assert.that(menganito.estaEbria())	 // (alcoholIngerido = 5L) * (peso = 60) = 300. Supera el aguante de 150, estas re sarpado menganito.
+	}
+	
+	test "Fulanito y Menganito sommeliers" {
+		assert.that(fulanito.leGustaLaCerveza(guiness))		// (lupulo = 10). Es mayor a 4 como le gusta a los belgas.
+		assert.notThat(fulanito.leGustaLaCerveza(corona))	// (lupulo = 3). No supera los 4.
+		assert.that(menganito.leGustaLaCerveza(quilmes))	// (graduacion = 10) Supera el 8% como les gusta a los checos.
+		assert.notThat(menganito.leGustaLaCerveza(hofbrau))	// (graduacion = 8) Esta al limite pero no supera el 8%.
+	}
+}
